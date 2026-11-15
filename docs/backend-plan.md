@@ -1,11 +1,11 @@
 # Solar OS backend plan
 
-Plan only. This document does not add a NestJS application, MongoDB deployment, routes, or seed scripts. The paired UI stays on one in-memory fixture and does not call HTTP.
+Plan only. This document does not add a Next.js application, MongoDB deployment, routes, or seed scripts. The paired UI stays on one in-memory fixture and does not call HTTP.
 
 Repositories:
 
 - Frontend: https://github.com/AntonFesun/solar_os — Angular UI. Already exists. One fixture drives every screen. Stub values are marked DEMO.
-- Backend: https://github.com/AntonFesun/solar_os_api — this plan. NestJS and MongoDB when a later implementation is built.
+- Backend: https://github.com/AntonFesun/solar_os_api — this plan. Next.js and MongoDB when a later implementation is built.
 
 The shared surface is the HTTP contract below. There is no shared library in this release.
 
@@ -23,11 +23,13 @@ Missing measurements are `null`. They are never coerced to zero.
 
 ## Runtime, when implemented
 
-One NestJS 11 service on the default Express adapter. MongoDB 7, database name `solar_os`, access through `@nestjs/mongoose`. Collection shapes live next to the HTTP layer. The balance identity, cost rollup, and solar ratios live in a domain layer the controllers call.
+One Next.js App Router service. The Angular frontend in `solar_os` stays. Route Handlers under `app/api/v1` serve the same `/api/v1` paths. MongoDB 7, database name `solar_os`, access through the official MongoDB driver or mongoose. Collection shapes live next to the HTTP layer. The balance identity, cost rollup, and solar ratios live in a domain layer the Route Handlers call.
 
-Modules: sites, telemetry, energy, battery, solar, cost, alerts, settings.
+Domain areas: sites, telemetry, energy, battery, solar, cost, alerts, settings.
 
 Process configuration is `MONGODB_URI`, `PORT`, and the frontend origin used for CORS. Secrets stay out of the repository. The first implementation has no authentication middleware.
+
+Long-lived device links (WebSocket, MQTT, Modbus) stay a later separate process, outside this Next.js service.
 
 `GET /api/v1/health` may report process up and a Mongo ping. It is an operational check, not a UI contract, and it returns no site data.
 
@@ -313,11 +315,11 @@ Error body fields: `statusCode`, `error`, `message`, `details`. Balance failures
 
 This task is the plan. No application code ships with it.
 
-First implementation, later: the NestJS service, the collections and indexes above, a `demo-site` seed that passes the balance rule, the read endpoints, settings PATCH, the read-time stale rule, and CORS for the frontend origin. Still no auth and no device I/O.
+First implementation, later: the Next.js App Router service, the collections and indexes above, a `demo-site` seed that passes the balance rule, the read endpoints, settings PATCH, the read-time stale rule, and CORS for the frontend origin. Still no auth and no device I/O.
 
 Auth is a later phase. It adds users and site membership and requires a credential on every route except health. A shared static secret is not a stand-in for that phase.
 
-Device adapters are a later phase. They ingest only. The adapter set is REST poll, WebSocket, MQTT, Modbus, smart meter, inverter, and BMS. An adapter's output is a power sample and, when the meter has phases, a phase sample. Both pass the balance check before insert. There is no command path to devices. Monitoring and control stay separate.
+Device adapters are a later phase. They ingest only. The adapter set is REST poll, WebSocket, MQTT, Modbus, smart meter, inverter, and BMS. Long-lived links (WebSocket, MQTT, Modbus) stay a separate process, outside the Next.js service. An adapter's output is a power sample and, when the meter has phases, a phase sample. Both pass the balance check before insert. There is no command path to devices. Monitoring and control stay separate.
 
 ## Non-goals
 
