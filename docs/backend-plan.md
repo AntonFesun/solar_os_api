@@ -240,7 +240,7 @@ Response fields:
 
 `imbalance` is `(max(current) - min(current)) / mean(current)` when three phases are present and the mean current is greater than zero. Otherwise null.
 
-`overload` is true when any phase voltage is outside `voltageMinV`/`voltageMaxV`, current exceeds `currentMaxA`, absolute active power exceeds the per-phase share of the grid import limit, or imbalance exceeds `phaseImbalanceMax`. Null limits are not evaluated.
+`overload` is true when any phase voltage is outside `voltageMinV`/`voltageMaxV`, current exceeds `currentMaxA`, positive `activePower` exceeds that phase's share of `limits.gridImportW`, the magnitude of negative `activePower` exceeds that phase's share of `limits.gridExportW`, or imbalance exceeds `phaseImbalanceMax`. A phase's share is the site limit divided by `phaseCount`. Null limits and null phase measurements are not evaluated.
 
 ### `GET /sites/:siteId/battery`
 
@@ -253,11 +253,11 @@ Response fields:
 
 `soc`, `powerW`, `tempC`, and `health` come from the latest power sample. `capacityWh` and `batteryReserveSoc` come from settings. `throughputWh` is the sum of `batteryIn + batteryOut` across hour buckets only. It is null when no hour buckets exist.
 
-`runtime.hours`, only while `powerW` is negative and `capacityWh` is greater than zero:
+`runtime.hours`, only while `powerW` is negative, `capacityWh` is greater than zero, and `soc` is greater than or equal to `batteryReserveSoc`:
 
 `(soc - batteryReserveSoc) / 100 * capacityWh / abs(powerW)`
 
-Assumption, returned as text: the latest discharge power is held constant; solar, grid, generator, and later load changes are ignored; reserve SOC comes from settings; the result is null when the battery is not discharging or capacity is zero.
+Assumption, returned as text: the latest discharge power is held constant; solar, grid, generator, and later load changes are ignored; reserve SOC comes from settings; the result is null when the battery is not discharging, capacity is zero, `soc` is null, or `soc` is below `batteryReserveSoc`.
 
 ### `GET /sites/:siteId/solar`
 
